@@ -62,3 +62,7 @@ Welcome to the neural networks workshop with TensorFlow in [La Salle](https://ww
         <img src="https://avatars.githubusercontent.com/u/15658638?s=280&v=4"  alt="Tensor Flow">
     </a>
 </div>
+
+
+Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/HtusHtIFHU593ubKe93Tt5
+
