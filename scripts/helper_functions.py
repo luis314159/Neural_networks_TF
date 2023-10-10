@@ -190,3 +190,57 @@ def plot_decision_regions(data, labels, classifier, xlabel=None, ylabel=None, le
         plt.legend(loc=legend_loc)
 
     plt.show()
+
+def plot_decision_regions_3D(data, labels, classifier, xlabel=None, ylabel=None, zlabel=None, legend_loc=None, resolution=0.02):
+    """
+    Visualiza las regiones de decisión de un clasificador en 3D.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.colors import ListedColormap
+    data = data.values
+    # Configuración de la visualización
+    markers = ('s', 'x', 'o', '^', 'v', '*', 'p', 'D', 'H', '<', '>', '1', '2', '3', '4')
+    colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan', 'magenta', 'yellow', 'white', 'black', 'purple', 'pink', 'brown', 'orange', 'teal', 'coral')
+    cmap = ListedColormap(colors[:len(np.unique(labels))])
+
+    # Extraer límites para cada dimensión
+    x1_min, x1_max = data[:, 0].min() - 1, data[:, 0].max() + 1
+    x2_min, x2_max = data[:, 1].min() - 1, data[:, 1].max() + 1
+    x3_min, x3_max = data[:, 2].min() - 1, data[:, 2].max() + 1
+
+    xx1, xx2, xx3 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                                np.arange(x2_min, x2_max, resolution),
+                                np.arange(x3_min, x3_max, resolution))
+    
+    # Hacer predicciones con el clasificador
+    input_data = np.c_[xx1.ravel(), xx2.ravel(), xx3.ravel()]
+    Z = classifier.predict(input_data)
+    
+    if Z.ndim > 1 and Z.shape[1] > 1:
+        Z = np.argmax(Z, axis=1)
+    else:
+        Z = np.squeeze(Z)
+
+    Z = Z.reshape(xx1.shape)
+
+    # Crear gráfico
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.contourf(xx1, xx2, xx3, Z, alpha=0.3, cmap=cmap)
+
+    for idx, cl in enumerate(np.unique(labels)):
+        ax.scatter(data[labels == cl, 0], data[labels == cl, 1], data[labels == cl, 2], 
+                   alpha=0.8, c=colors[idx], marker=markers[idx], edgecolor='black', label=cl)
+
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if zlabel:
+        ax.set_zlabel(zlabel)
+    if legend_loc:
+        ax.legend(loc=legend_loc)
+
+    plt.show()
