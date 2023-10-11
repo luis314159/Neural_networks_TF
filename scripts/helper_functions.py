@@ -191,56 +191,153 @@ def plot_decision_regions(data, labels, classifier, xlabel=None, ylabel=None, le
 
     plt.show()
 
-def plot_decision_regions_3D(data, labels, classifier, xlabel=None, ylabel=None, zlabel=None, legend_loc=None, resolution=0.02):
-    """
-    Visualiza las regiones de decisión de un clasificador en 3D.
-    """
-    import matplotlib.pyplot as plt
+
+def plot_decision_plane_3D_interactive(data, labels, classifier, resolution=0.02, opacity = 0.08):
+    # Convertir a numpy array si es necesario
+    import plotly.graph_objects as go
     import numpy as np
-    from matplotlib.colors import ListedColormap
-    data = data.values
-    # Configuración de la visualización
-    markers = ('s', 'x', 'o', '^', 'v', '*', 'p', 'D', 'H', '<', '>', '1', '2', '3', '4')
-    colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan', 'magenta', 'yellow', 'white', 'black', 'purple', 'pink', 'brown', 'orange', 'teal', 'coral')
-    cmap = ListedColormap(colors[:len(np.unique(labels))])
+    import pandas as pd
+    if isinstance(data, pd.DataFrame):
+      
+        data = data.values
 
     # Extraer límites para cada dimensión
     x1_min, x1_max = data[:, 0].min() - 1, data[:, 0].max() + 1
     x2_min, x2_max = data[:, 1].min() - 1, data[:, 1].max() + 1
     x3_min, x3_max = data[:, 2].min() - 1, data[:, 2].max() + 1
 
+    # Generar grillas para dos de los tres ejes (x y y)
+    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                           np.arange(x2_min, x2_max, resolution))
+
+    # Crear trazas para datos
+    traces = []
+    unique_labels = np.unique(labels)
+    for idx, label in enumerate(unique_labels):
+        traces.append(go.Scatter3d(
+            x=data[labels == label, 0],
+            y=data[labels == label, 1],
+            z=data[labels == label, 2],
+            mode='markers',
+            marker=dict(size=5, opacity=0.8),
+            name=f"Class {label}"
+        ))
+
+    # Trazar la superficie de decisión en varios niveles de z
+    z_values = np.arange(x3_min, x3_max, resolution)
+    for z in z_values:
+        Z = classifier.predict(np.c_[xx1.ravel(), xx2.ravel(), np.full(xx1.ravel().shape, z)])
+        Z = Z.reshape(xx1.shape)
+        surface = go.Surface(x=xx1, y=xx2, z=z * np.ones_like(xx1), surfacecolor=Z, colorscale='Viridis', opacity=opacity, showscale=False)
+        traces.append(surface)
+
+    # Crear la figura
+    layout = go.Layout(title="3D Decision Plane")
+    fig = go.Figure(data=traces, layout=layout)
+    
+    # Mostrar la figura
+    fig.show()
+
+
+def plot_decision_boundary_3D(data, labels, classifier, resolution=0.02, opacity = 0.03):
+    # Convertir a numpy array si es necesario
+    import plotly.graph_objects as go
+    import numpy as np
+    import pandas as pd
+    if isinstance(data, pd.DataFrame):
+        data = data.values
+
+    # Extraer límites para cada dimensión
+    x1_min, x1_max = data[:, 0].min() - 1, data[:, 0].max() + 1
+    x2_min, x2_max = data[:, 1].min() - 1, data[:, 1].max() + 1
+    x3_min, x3_max = data[:, 2].min() - 1, data[:, 2].max() + 1
+
+    # Generar grillas para los tres ejes
     xx1, xx2, xx3 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
                                 np.arange(x2_min, x2_max, resolution),
                                 np.arange(x3_min, x3_max, resolution))
-    
-    # Hacer predicciones con el clasificador
-    input_data = np.c_[xx1.ravel(), xx2.ravel(), xx3.ravel()]
-    Z = classifier.predict(input_data)
-    
-    if Z.ndim > 1 and Z.shape[1] > 1:
-        Z = np.argmax(Z, axis=1)
-    else:
-        Z = np.squeeze(Z)
 
+    # Predicciones para cada combinación de puntos en la grilla
+    Z = classifier.predict(np.c_[xx1.ravel(), xx2.ravel(), xx3.ravel()])
     Z = Z.reshape(xx1.shape)
 
-    # Crear gráfico
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    # Vamos a buscar puntos cerca de los límites de decisión
+    # Para simplificar, identificamos puntos donde el vecino no tiene el mismo valor
+    boundary_points = np.where(
+        (np.roll(Z, shift=-1, axis=0) != Z) |
+        (np.roll(Z, shift=-1, axis=1) != Z) |
+        (np.roll(Z, shift=-1, axis=2) != Z)
+    )
 
-    ax.contourf(xx1, xx2, xx3, Z, alpha=0.3, cmap=cmap)
+    # Crear trazas para datos
+    traces = []
+    unique_labels = np.unique(labels)
+    for idx, label in enumerate(unique_labels):
+        traces.append(go.Scatter3d(
+            x=data[labels == label, 0],
+            y=data[labels == label, 1],
+            z=data[labels == label, 2],
+            mode='markers',
+            marker=dict(size=5, opacity=opacity),
+            name=f"Class {label}"
+        ))
 
-    for idx, cl in enumerate(np.unique(labels)):
-        ax.scatter(data[labels == cl, 0], data[labels == cl, 1], data[labels == cl, 2], 
-                   alpha=0.8, c=colors[idx], marker=markers[idx], edgecolor='black', label=cl)
+    # Trazar la superficie de decisión
+    surface = go.Mesh3d(x=xx1[boundary_points],
+                        y=xx2[boundary_points],
+                        z=xx3[boundary_points],
+                        alphahull=5, opacity=0.4, color='yellow')
+    traces.append(surface)
 
-    if xlabel:
-        ax.set_xlabel(xlabel)
-    if ylabel:
-        ax.set_ylabel(ylabel)
-    if zlabel:
-        ax.set_zlabel(zlabel)
-    if legend_loc:
-        ax.legend(loc=legend_loc)
+    # Crear la figura
+    layout = go.Layout(title="3D Decision Boundary")
+    fig = go.Figure(data=traces, layout=layout)
 
-    plt.show()
+    # Mostrar la figura
+    fig.show()
+
+
+def plot_3D_interactive(data, labels):
+    import plotly.graph_objects as go
+    import pandas as pd
+    import numpy as np
+    """
+    Grafica puntos de datos en 3D de manera interactiva utilizando plotly.
+    
+    Parámetros:
+    - data: Un array o DataFrame con tres columnas, representando las coordenadas x, y, z de los puntos.
+    - labels: Una lista o array con las etiquetas (clases) de cada punto en `data`.
+
+    Retorna:
+    None. Muestra un gráfico 3D interactivo.
+    """
+    
+    # Convertir a numpy array si 'data' es un DataFrame de pandas
+    if isinstance(data, pd.DataFrame):
+        data = data.values
+
+    # Inicializar una lista para almacenar las trazas (series de datos) que se mostrarán en el gráfico
+    traces = []
+    
+    # Obtener etiquetas únicas para poder colorear los puntos según su clase
+    unique_labels = np.unique(labels)
+    
+    # Por cada etiqueta única, crea una traza (serie de datos) y añádela a la lista 'traces'
+    for idx, label in enumerate(unique_labels):
+        traces.append(go.Scatter3d(
+            x=data[labels == label, 0],   # Coordenadas x de los puntos con la etiqueta actual
+            y=data[labels == label, 1],   # Coordenadas y de los puntos con la etiqueta actual
+            z=data[labels == label, 2],   # Coordenadas z de los puntos con la etiqueta actual
+            mode='markers',               # Tipo de gráfico (en este caso, marcadores/puntos)
+            marker=dict(size=5, opacity=0.8), # Estilo de los marcadores
+            name=f"Class {label}"         # Nombre de la traza (etiqueta)
+        ))
+
+    # Definir la disposición (layout) del gráfico, como el título
+    layout = go.Layout(title="3D Data Plot")
+    
+    # Crear la figura usando las trazas y el layout definidos
+    fig = go.Figure(data=traces, layout=layout)
+    
+    # Mostrar la figura
+    fig.show()
