@@ -65,5 +65,5 @@ In this workshop we will have a lot of fun learning about neural networks in jus
 </div>
 
 
-Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/HtusHtIFHU593ubKe93Tt5
+Join our discord server: https://discord.gg/sc9bkxd2ft
 
