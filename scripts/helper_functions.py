@@ -227,82 +227,98 @@ def plot_decision_plane_3D_interactive(data, labels, classifier, resolution=0.02
     fig.show()
 
 
-def plot_decision_boundary_3D(data, labels, classifier, resolution=0.02, opacity=0.03):
+def plot_decision_boundary_3D(data, labels, classifier, resolution=0.02, opacity=0.5):
     """
-    Visualiza el límite de decisión de un clasificador en 3D.
+    Visualiza en 3D el límite de decisión de un clasificador para un conjunto de datos tridimensionales.
+
+    Esta función genera una visualización tridimensional del límite de decisión de un clasificador, utilizando datos
+    de entrada y etiquetas correspondientes. Se basa en la creación de una grilla densa dentro del espacio definido
+    por los límites de los datos y utiliza el clasificador para predecir la clase de cada punto en esta grilla.
+    Luego, identifica y visualiza el límite de decisión entre las clases.
 
     Parámetros:
-    - data (array-like o pd.DataFrame): Los datos de entrada que se utilizarán para visualizar el límite de decisión. 
-      Debe tener exactamente tres características (columnas).
-    - labels (array-like): Las etiquetas o clases correspondientes a cada punto en `data`.
-    - classifier (objeto clasificador): Un objeto clasificador de scikit-learn que tiene un método `predict`.
-    - resolution (float, opcional): La resolución de la grilla sobre la cual se evaluará el clasificador. Un valor más bajo
-      significa una grilla más fina y por lo tanto más detalle en la visualización, pero aumenta el tiempo de cómputo.
-    - opacity (float, opcional): La opacidad de los puntos de datos en la visualización, para ayudar a visualizar la densidad
-      de los puntos.
+    - data (array-like o pd.DataFrame): Datos de entrada que deben contener exactamente tres características (columnas).
+      Si se pasa un pd.DataFrame, se convierte a un array de NumPy.
+    - labels (array-like): Vector de etiquetas o clases correspondientes a cada punto de datos en `data`.
+    - classifier: Objeto clasificador con un método `predict`. Este clasificador debe ser capaz de aceptar un array de
+      entrada de forma (n, 3) y devolver una salida de predicción.
+    - resolution (float, opcional): Define la resolución de la grilla generada para evaluar el clasificador. Una
+      resolución más baja resulta en una grilla más densa y una visualización potencialmente más detallada.
+    - opacity (float, opcional): Opacidad de los puntos de datos en la visualización. Ayuda a manejar la visualización
+      en áreas densamente pobladas de puntos.
 
-    Esta función convierte `data` a un array de NumPy si es necesario, calcula los límites de cada dimensión de los datos,
-    y genera una grilla tridimensional. Luego, hace predicciones para cada punto en la grilla y busca puntos cerca de los
-    límites de decisión, identificando cambios en las predicciones. Finalmente, visualiza tanto los datos originales como
-    la superficie de decisión calculada en un espacio 3D utilizando Plotly.
+    La función utiliza Plotly para la visualización, por lo que es necesario tener esta biblioteca instalada.
 
-    Se requiere Plotly para la visualización. La función crea una figura 3D interactiva que muestra los puntos de datos
-    con diferentes colores para cada clase y una superficie que representa el límite de decisión del clasificador.
+    La visualización resultante incluye tanto los puntos de datos originales, diferenciados por clase, como los puntos
+    que se identifican como parte del límite de decisión, marcados en un color distinto para resaltar el límite entre
+    las clases predichas por el clasificador.
+
+    Notas:
+    - Esta función asume que el clasificador ya está entrenado.
+    - La precisión de la visualización del límite de decisión puede variar según el clasificador utilizado y los
+      parámetros específicos de la función, como la resolución de la grilla.
     """
     import plotly.graph_objects as go
     import numpy as np
     import pandas as pd
 
-    # Convertir a numpy array si es necesario
+    # Convertir data a numpy array si es necesario
     if isinstance(data, pd.DataFrame):
         data = data.values
-    data = np.array(data)
 
     # Extraer límites para cada dimensión
-    x1_min, x1_max = data[:, 0].min() - 1, data[:, 0].max() + 1
-    x2_min, x2_max = data[:, 1].min() - 1, data[:, 1].max() + 1
-    x3_min, x3_max = data[:, 2].min() - 1, data[:, 2].max() + 1
+    x_min, x_max = data[:, 0].min() - 1, data[:, 0].max() + 1
+    y_min, y_max = data[:, 1].min() - 1, data[:, 1].max() + 1
+    z_min, z_max = data[:, 2].min() - 1, data[:, 2].max() + 1
 
     # Generar grillas para los tres ejes
-    xx1, xx2, xx3 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
-                                np.arange(x2_min, x2_max, resolution),
-                                np.arange(x3_min, x3_max, resolution))
+    xx, yy, zz = np.meshgrid(np.arange(x_min, x_max, resolution),
+                             np.arange(y_min, y_max, resolution),
+                             np.arange(z_min, z_max, resolution))
 
     # Predicciones para cada combinación de puntos en la grilla
-    Z = classifier.predict(np.c_[xx1.ravel(), xx2.ravel(), xx3.ravel()])
-    Z = Z.reshape(xx1.shape)
+    Z = classifier.predict(np.c_[xx.ravel(), yy.ravel(), zz.ravel()])
+    Z_class = np.argmax(Z, axis=1)
+    Z_class_reshaped = Z_class.reshape(xx.shape)
 
     # Identificar puntos cerca de los límites de decisión
+    # (Este paso podría necesitar ajustes basados en tu necesidad específica de visualización)
     boundary_points = np.where(
-        (np.roll(Z, shift=-1, axis=0) != Z) |
-        (np.roll(Z, shift=-1, axis=1) != Z) |
-        (np.roll(Z, shift=-1, axis=2) != Z)
-    )
+        (np.roll(Z_class_reshaped, shift=-1, axis=0) != Z_class_reshaped) |
+        (np.roll(Z_class_reshaped, shift=-1, axis=1) != Z_class_reshaped) |
+        (np.roll(Z_class_reshaped, shift=-1, axis=2) != Z_class_reshaped), True, False)
 
-    # Crear trazas para datos
+    # Crear trazas para los datos
     traces = []
     unique_labels = np.unique(labels)
-    for idx, label in enumerate(unique_labels):
+    for label in unique_labels:
+        indices = labels == label
         traces.append(go.Scatter3d(
-            x=data[labels == label, 0],
-            y=data[labels == label, 1],
-            z=data[labels == label, 2],
+            x=data[indices, 0], y=data[indices, 1], z=data[indices, 2],
             mode='markers',
             marker=dict(size=5, opacity=opacity),
             name=f"Class {label}"
         ))
 
-    # Trazar la superficie de decisión
-    surface = go.Mesh3d(x=xx1[boundary_points],
-                        y=xx2[boundary_points],
-                        z=xx3[boundary_points],
-                        alphahull=5, opacity=0.4, color='yellow')
-    traces.append(surface)
+    # Extraer coordenadas de los puntos en el límite de decisión
+    x_boundary, y_boundary, z_boundary = xx[boundary_points], yy[boundary_points], zz[boundary_points]
 
-    # Crear y mostrar la figura
-    layout = go.Layout(title="3D Decision Boundary")
+    # Trazar los puntos del límite de decisión
+    boundary_trace = go.Scatter3d(
+        x=x_boundary.ravel(), y=y_boundary.ravel(), z=z_boundary.ravel(),
+        mode='markers',
+        marker=dict(size=2, color='yellow', opacity=1),
+        name='Decision Boundary'
+    )
+    traces.append(boundary_trace)
+
+    # Configurar la visualización final
+    layout = go.Layout(title="3D Decision Boundary", margin=dict(l=0, r=0, b=0, t=0))
     fig = go.Figure(data=traces, layout=layout)
+
+    # Mostrar la figura
     fig.show()
+
 
 def plot_3D_interactive(data, labels):
     import plotly.graph_objects as go
