@@ -321,6 +321,7 @@ def plot_decision_boundary_3D(data, labels, classifier, resolution=0.02, opacity
 
 
 def plot_3D_interactive(data, labels):
+
     import plotly.graph_objects as go
     import pandas as pd
     import numpy as np
@@ -364,3 +365,29 @@ def plot_3D_interactive(data, labels):
     
     # Mostrar la figura
     fig.show()
+
+
+
+def plot_history(history):
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(12, 6))
+
+    # Plot de la pérdida
+    plt.subplot(1, 2, 1)  # 1 fila, 2 columnas, primer gráfico
+    plt.plot(history.history['loss'], label='Pérdida de entrenamiento')
+    plt.plot(history.history['val_loss'], label='Pérdida de validación')
+    plt.title('Pérdida del Modelo')
+    plt.xlabel('Épocas')
+    plt.ylabel('Pérdida')
+    plt.legend()
+
+    # Plot de la precisión
+    plt.subplot(1, 2, 2)  # 1 fila, 2 columnas, segundo gráfico
+    plt.plot(history.history['accuracy'], label='Precisión de entrenamiento')
+    plt.plot(history.history['val_accuracy'], label='Precisión de validación')
+    plt.title('Precisión del Modelo')
+    plt.xlabel('Épocas')
+    plt.ylabel('Precisión')
+    plt.legend()
+
+    plt.show()
