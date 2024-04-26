@@ -391,3 +391,18 @@ def plot_history(history):
     plt.legend()
 
     plt.show()
+
+def versicolor_to_one(x):
+  if x == 'Iris-versicolor':
+    return 1
+  else:
+    return 0
+  
+# Función con la lógica para cambniar a one_hot encoding
+def encode_species(x):
+    if x == 'Iris-versicolor':
+        return [0, 0, 1]
+    elif x == 'Iris-setosa':
+        return [0, 1, 0]
+    else:  # Se asume que la única otra opción es 'Iris-virginica'
+        return [1, 0, 0]
