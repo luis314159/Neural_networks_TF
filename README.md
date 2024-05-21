@@ -23,7 +23,7 @@ In this workshop we will have a lot of fun learning about neural networks in jus
   * What is TensorFlow?
   * TensorFlow vs. other frameworks (like PyTorch)
 ## Building a Neural Network with TensorFlow
-  * Constructing a Simple Model
+  * Constructing a simple Model
   * Model definition: layers, neurons, activation functions
   * Compilation: choosing optimizers, loss, and metrics
   * Training and Evaluation
@@ -53,6 +53,9 @@ In this workshop we will have a lot of fun learning about neural networks in jus
   * Introduction to TensorFlow Serving
   * Other deployment options
   * Conclusion and Resources
+## Model deployment
+  * Model deployment using Flask
+  * Model deployment using streamlit
 
 ## Summary of what was learned
   * Next steps: where to learn more, communities, etc.
