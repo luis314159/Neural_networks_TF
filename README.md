@@ -10,7 +10,7 @@ Welcome to the neural networks workshop with TensorFlow in [La Salle](https://ww
 </div>
 In this workshop we will have a lot of fun learning about neural networks in just one week, so we will use powerful tools like GPT chat to make this process faster and more fun. I am very excited about this course, I hope you are too. Let's start to see what we are going to cover in this workshop.
 
-#How to take this course: 
+# How to take this course: 
     You will find the lectures from this course in the folder notebooks, I recommend you to take the lectures in order (The notebooks are enumerated, and the ones that are not they are just extras).
 
 # Content of this workshop
