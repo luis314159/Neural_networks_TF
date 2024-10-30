@@ -406,3 +406,79 @@ def encode_species(x):
         return [0, 1, 0]
     else:  # Se asume que la única otra opción es 'Iris-virginica'
         return [1, 0, 0]
+
+
+def plot_decision_regions2(data, labels, classifier, xlabel=None, ylabel=None, legend_loc=None, resolution=0.02, framework='sklearn'):
+    """
+    Visualiza las regiones de decisión de un clasificador en 2D.
+    
+    Parámetros:
+    - data: Datos de entrada (features).
+    - labels: Etiquetas o clases de los datos.
+    - classifier: Clasificador entrenado.
+    - xlabel: Etiqueta para el eje X.
+    - ylabel: Etiqueta para el eje Y.
+    - legend_loc: Ubicación de la leyenda en la gráfica.
+    - resolution: Resolución de la malla de decisión.
+    - framework: 'sklearn' o 'tensorflow' para indicar la compatibilidad con los clasificadores.
+    
+    Retorna:
+    None. Muestra una gráfica.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.colors import ListedColormap
+
+    data, labels = np.array(data), np.array(labels)
+
+    markers = ('s', 'x', 'o', '^', 'v', '*', 'p', 'D', 'H', '<', '>', '1', '2', '3', '4')
+    colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan', 'magenta', 'yellow', 'white', 'black', 'purple', 'pink', 'brown', 'orange', 'teal', 'coral')
+    cmap = ListedColormap(colors[:len(np.unique(labels))])
+
+    x1_min, x1_max = data[:, 0].min() - 1, data[:, 0].max() + 1
+    x2_min, x2_max = data[:, 1].min() - 1, data[:, 1].max() + 1
+    xx1, xx2 = np.meshgrid(np.arange(x1_min, x1_max, resolution),
+                           np.arange(x2_min, x2_max, resolution))
+
+    # Combinar las coordenadas de la malla en una matriz de dos columnas
+    input_data = np.array([xx1.ravel(), xx2.ravel()]).T
+
+    # Predecir las clases de cada punto en la malla
+    if framework == 'tensorflow':
+        Z = classifier.predict(input_data)
+        # Si la salida es una matriz con múltiples columnas, tomar la clase con la mayor probabilidad
+        if Z.ndim > 1 and Z.shape[1] > 1:
+            Z = np.argmax(Z, axis=1)
+        else:
+            Z = np.squeeze(Z)
+    elif framework == 'sklearn':
+        Z = classifier.predict(input_data)
+        if Z.ndim > 1 and Z.shape[1] > 1:
+            Z = np.argmax(Z, axis=1)
+        else:
+            Z = np.squeeze(Z)
+    else:
+        raise ValueError("El argumento 'framework' debe ser 'tensorflow' o 'sklearn'.")
+
+    # Dar forma al resultado para que coincida con las dimensiones de la malla
+    Z = Z.reshape(xx1.shape)
+
+    # Visualizar las regiones de decisión
+    plt.contourf(xx1, xx2, Z, alpha=0.3, cmap=cmap)
+    plt.xlim(x1_min, x1_max)
+    plt.ylim(x2_min, x2_max)
+
+    # Dibujar los puntos de datos y etiquetarlos
+    for idx, cl in enumerate(np.unique(labels)):
+        plt.scatter(x=data[labels == cl, 0], y=data[labels == cl, 1],
+                    alpha=0.8, c=colors[idx % len(colors)], marker=markers[idx % len(markers)], 
+                    label=cl, edgecolor='black')
+
+    if xlabel:
+        plt.xlabel(xlabel) 
+    if ylabel:
+        plt.ylabel(ylabel)
+    if legend_loc:
+        plt.legend(loc=legend_loc)
+
+    plt.show()
